@@ -5,17 +5,24 @@ import os
 import re
 from google.oauth2.service_account import Credentials
 
-# 1. Google Sheets Connection (Robust Auth)
+# --- CSS FOR MOBILE SIDE-BY-SIDE COLUMNS ---
+st.markdown("""
+<style>
+[data-testid="column"] {
+    width: calc(50% - 1rem) !important;
+    flex: 1 1 calc(50% - 1rem) !important;
+    min-width: calc(50% - 1rem) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# 1. Google Sheets Connection
 @st.cache_resource
 def get_gs_client():
-    # Verify the secrets exist
     if "gcp_service_account" not in st.secrets:
         st.error("Section 'gcp_service_account' not found in secrets!")
         st.stop()
-        
     creds_dict = dict(st.secrets["gcp_service_account"])
-    
-    # Ensure private_key exists
     if "private_key" not in creds_dict:
         st.error("Key 'private_key' not found in secrets!")
         st.stop()
@@ -24,8 +31,6 @@ def get_gs_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    
-    # Authorize using modern Google Auth
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     return gspread.authorize(creds)
 
@@ -37,7 +42,6 @@ def get_sheet_data(sheet_name):
     worksheet = sh.worksheet(sheet_name)
     return worksheet.get_all_values()
 
-# Robust URL extraction using Regex
 def clean_url(url_val):
     val = str(url_val).strip()
     if not val or val.lower() in ['nan', 'none', '']:
@@ -96,7 +100,6 @@ elif st.session_state.page == 'Destination':
     
     rows = get_sheet_data(f"{country} Itinerary")
     df = pd.DataFrame(rows[1:], columns=rows[0])
-    
     df.iloc[:, 3] = df.iloc[:, 3].str.strip()
     dest_df = df[df.iloc[:, 3] == dest.strip()]
     
