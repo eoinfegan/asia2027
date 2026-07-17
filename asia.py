@@ -3,22 +3,30 @@ import pandas as pd
 import gspread
 import os
 import re
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
-# 1. Google Sheets Connection (Updated for Secrets)
+# 1. Google Sheets Connection (Robust Auth)
 @st.cache_resource
 def get_gs_client():
-    # Load credentials directly from Streamlit Secrets
+    # Verify the secrets exist
+    if "gcp_service_account" not in st.secrets:
+        st.error("Section 'gcp_service_account' not found in secrets!")
+        st.stop()
+        
     creds_dict = dict(st.secrets["gcp_service_account"])
     
-    scope = [
-        "https://spreadsheets.google.com/feeds", 
-        'https://www.googleapis.com/auth/spreadsheets',
-        "https://www.googleapis.com/auth/drive.file", 
+    # Ensure private_key exists
+    if "private_key" not in creds_dict:
+        st.error("Key 'private_key' not found in secrets!")
+        st.stop()
+
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
     
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    # Authorize using modern Google Auth
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     return gspread.authorize(creds)
 
 client = get_gs_client()
@@ -89,17 +97,13 @@ elif st.session_state.page == 'Destination':
     rows = get_sheet_data(f"{country} Itinerary")
     df = pd.DataFrame(rows[1:], columns=rows[0])
     
-    # Filter by destination
     df.iloc[:, 3] = df.iloc[:, 3].str.strip()
     dest_df = df[df.iloc[:, 3] == dest.strip()]
     
     if dest_df.empty:
         st.error(f"No data found for '{dest}'.")
     else:
-        # --- STAY & EAT SECTION ---
         st.subheader("Stay & Eat")
-        
-        # Accommodation: Button (J=9), Name (H=7)
         c1, c2 = st.columns([1, 2])
         acc_link = clean_url(dest_df.iloc[0, 9])
         acc_name = dest_df.iloc[0, 7]
@@ -109,7 +113,6 @@ elif st.session_state.page == 'Destination':
         with c2:
             st.write(f"**{acc_name if pd.notna(acc_name) else 'N/A'}**")
             
-        # Food: Button (L=11), Name (K=10)
         c1, c2 = st.columns([1, 2])
         food_link = clean_url(dest_df.iloc[0, 11])
         food_name = dest_df.iloc[0, 10]
@@ -121,17 +124,14 @@ elif st.session_state.page == 'Destination':
             
         st.divider()
         st.subheader("Activities")
-        
-        # Activity Table Headers
         col_act, col_comm = st.columns([2, 3])
         col_act.write("**Activity**")
         col_comm.write("**Notes**")
         
-        # Interactive Activity Loop
         for idx, row in dest_df.iterrows():
-            activity_name = row.iloc[4]    # Column E
-            activity_comment = row.iloc[5] # Column F
-            activity_link = clean_url(row.iloc[6]) # Column G
+            activity_name = row.iloc[4]
+            activity_comment = row.iloc[5]
+            activity_link = clean_url(row.iloc[6])
             
             if pd.notna(activity_name) and str(activity_name).strip() != "":
                 c1, c2 = st.columns([2, 3])
