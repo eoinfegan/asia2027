@@ -85,13 +85,20 @@ elif st.session_state.page == 'Country':
     country = st.session_state.current_country
     st.title(f"{country} Destinations")
     if st.button("Back to Home"): navigate_to('Home')
+    
     rows = get_sheet_data(f"{country} Itinerary")
     df = pd.DataFrame(rows[1:], columns=rows[0])
     destinations = df.iloc[:, 3].dropna().unique()
+    
     for i, dest in enumerate(destinations):
-        if str(dest).strip() == "": continue
-        display_text = f"🚌 {dest}" if str(dest).lower().startswith("travel") else dest
-        if st.button(display_text, key=f"{dest}_{i}"): navigate_to('Destination', country, dest)
+        dest_str = str(dest).strip()
+        # Exclude empty strings and the "Location" header
+        if dest_str == "" or dest_str.lower() == "location": 
+            continue
+            
+        display_text = f"🚌 {dest}" if dest_str.lower().startswith("travel") else dest
+        if st.button(display_text, key=f"{dest}_{i}"): 
+            navigate_to('Destination', country, dest)
 
 elif st.session_state.page == 'Destination':
     country, dest = st.session_state.current_country, st.session_state.selected_destination
