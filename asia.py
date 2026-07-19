@@ -85,7 +85,6 @@ elif st.session_state.page == 'Overview':
     rows = get_sheet_data("overall itinerary")
     df_overview = pd.DataFrame(rows[37:102], columns=["Date", "Activity", "Information"] + [""]*(len(rows[0])-3))
     df_overview = df_overview.iloc[:, 0:3]
-    # FIX: Use dayfirst=True to ensure dates like 13/02 are parsed correctly
     df_overview['Date'] = pd.to_datetime(df_overview['Date'], dayfirst=True, errors='coerce').dt.strftime('%d/%m').fillna('')
     st.dataframe(df_overview, use_container_width=True, hide_index=True)
 
@@ -118,23 +117,28 @@ elif st.session_state.page == 'Destination':
         st.error(f"No data found for '{dest}'.")
     else:
         st.subheader("Stay & Eat")
-        c1, c2 = st.columns([1, 2])
+        
+        # Accommodation Section
         acc_link = clean_url(dest_df.iloc[0, 9])
         acc_name = dest_df.iloc[0, 7]
-        with c1:
-            if acc_link: st.link_button("🏨 Accommodation", acc_link)
-            else: st.write("🏨 *No Link*")
-        with c2:
-            st.write(f"**{acc_name if pd.notna(acc_name) else 'N/A'}**")
+        if pd.notna(acc_name) or acc_link:
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                if acc_link: st.link_button("🏨 Accommodation", acc_link)
+                else: st.write("🏨 *No Link*")
+            with c2:
+                st.write(f"**{acc_name if pd.notna(acc_name) else 'N/A'}**")
             
-        c1, c2 = st.columns([1, 2])
+        # Food Section
         food_link = clean_url(dest_df.iloc[0, 11])
         food_name = dest_df.iloc[0, 10]
-        with c1:
-            if food_link: st.link_button("🍽️ Food", food_link)
-            else: st.write("🍽️ *No Link*")
-        with c2:
-            st.write(f"**{food_name if pd.notna(food_name) else 'N/A'}**")
+        if pd.notna(food_name) or food_link:
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                if food_link: st.link_button("🍽️ Food", food_link)
+                else: st.write("🍽️ No Link")
+            with c2:
+                st.write(f"**{food_name if pd.notna(food_name) else 'N/A'}**")
             
         st.divider()
         st.subheader("Activities")
