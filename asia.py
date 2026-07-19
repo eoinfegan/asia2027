@@ -5,13 +5,20 @@ import os
 import re
 from google.oauth2.service_account import Credentials
 
-# --- CSS FOR MOBILE SIDE-BY-SIDE COLUMNS ---
+# --- CSS FOR MOBILE COLUMNS AND BUTTON STYLING ---
 st.markdown("""
 <style>
+/* Responsive Columns */
 [data-testid="column"] {
     width: calc(50% - 1rem) !important;
     flex: 1 1 calc(50% - 1rem) !important;
     min-width: calc(50% - 1rem) !important;
+}
+/* Back Buttons Style */
+.st-key-back_home button, .st-key-back_country button {
+    background-color: #ADD8E6 !important;
+    color: black !important;
+    border: 1px solid #87CEEB !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -74,7 +81,7 @@ if st.session_state.page == 'Home':
 
 elif st.session_state.page == 'Overview':
     st.title("Overview")
-    if st.button("Back to Home"): navigate_to('Home')
+    if st.button("Back to Home", key="back_home"): navigate_to('Home')
     rows = get_sheet_data("overall itinerary")
     df_overview = pd.DataFrame(rows[37:102], columns=["Date", "Activity", "Information"] + [""]*(len(rows[0])-3))
     df_overview = df_overview.iloc[:, 0:3]
@@ -84,7 +91,7 @@ elif st.session_state.page == 'Overview':
 elif st.session_state.page == 'Country':
     country = st.session_state.current_country
     st.title(f"{country} Destinations")
-    if st.button("Back to Home"): navigate_to('Home')
+    if st.button("Back to Home", key="back_home"): navigate_to('Home')
     
     rows = get_sheet_data(f"{country} Itinerary")
     df = pd.DataFrame(rows[1:], columns=rows[0])
@@ -92,16 +99,14 @@ elif st.session_state.page == 'Country':
     
     for i, dest in enumerate(destinations):
         dest_str = str(dest).strip()
-        if dest_str == "" or dest_str.lower() == "location": 
-            continue
+        if dest_str == "" or dest_str.lower() == "location": continue
         display_text = f"🚌 {dest}" if dest_str.lower().startswith("travel") else dest
-        if st.button(display_text, key=f"{dest}_{i}"): 
-            navigate_to('Destination', country, dest)
+        if st.button(display_text, key=f"{dest}_{i}"): navigate_to('Destination', country, dest)
 
 elif st.session_state.page == 'Destination':
     country, dest = st.session_state.current_country, st.session_state.selected_destination
     st.title(dest)
-    if st.button("Back to Country"): navigate_to('Country', country)
+    if st.button("Back to Country", key="back_country"): navigate_to('Country', country)
     
     rows = get_sheet_data(f"{country} Itinerary")
     df = pd.DataFrame(rows[1:], columns=rows[0])
@@ -140,7 +145,6 @@ elif st.session_state.page == 'Destination':
             
             if pd.notna(activity_name) and str(activity_name).strip() != "":
                 has_comment = pd.notna(activity_comment) and str(activity_comment).strip() not in ["", "-", "nan"]
-                
                 if has_comment:
                     c1, c2 = st.columns([2, 3])
                     with c1:
