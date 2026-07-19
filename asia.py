@@ -85,8 +85,8 @@ elif st.session_state.page == 'Overview':
     rows = get_sheet_data("overall itinerary")
     df_overview = pd.DataFrame(rows[37:102], columns=["Date", "Activity", "Information"] + [""]*(len(rows[0])-3))
     df_overview = df_overview.iloc[:, 0:3]
-    # Format date as DD/MM (ignoring year)
-    df_overview['Date'] = pd.to_datetime(df_overview['Date'], errors='coerce').dt.strftime('%d/%m').fillna('')
+    # FIX: Use dayfirst=True to ensure dates like 13/02 are parsed correctly
+    df_overview['Date'] = pd.to_datetime(df_overview['Date'], dayfirst=True, errors='coerce').dt.strftime('%d/%m').fillna('')
     st.dataframe(df_overview, use_container_width=True, hide_index=True)
 
 elif st.session_state.page == 'Country':
