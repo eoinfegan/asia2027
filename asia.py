@@ -92,10 +92,8 @@ elif st.session_state.page == 'Country':
     
     for i, dest in enumerate(destinations):
         dest_str = str(dest).strip()
-        # Exclude empty strings and the "Location" header
         if dest_str == "" or dest_str.lower() == "location": 
             continue
-            
         display_text = f"🚌 {dest}" if dest_str.lower().startswith("travel") else dest
         if st.button(display_text, key=f"{dest}_{i}"): 
             navigate_to('Destination', country, dest)
@@ -134,9 +132,6 @@ elif st.session_state.page == 'Destination':
             
         st.divider()
         st.subheader("Activities")
-        col_act, col_comm = st.columns([2, 3])
-        col_act.write("**Activity**")
-        col_comm.write("**Notes**")
         
         for idx, row in dest_df.iterrows():
             activity_name = row.iloc[4]
@@ -144,9 +139,15 @@ elif st.session_state.page == 'Destination':
             activity_link = clean_url(row.iloc[6])
             
             if pd.notna(activity_name) and str(activity_name).strip() != "":
-                c1, c2 = st.columns([2, 3])
-                with c1:
+                has_comment = pd.notna(activity_comment) and str(activity_comment).strip() not in ["", "-", "nan"]
+                
+                if has_comment:
+                    c1, c2 = st.columns([2, 3])
+                    with c1:
+                        if activity_link: st.link_button(f"📍 {activity_name}", activity_link)
+                        else: st.write(f"**{activity_name}**")
+                    with c2:
+                        st.write(activity_comment)
+                else:
                     if activity_link: st.link_button(f"📍 {activity_name}", activity_link)
                     else: st.write(f"**{activity_name}**")
-                with c2:
-                    st.write(activity_comment if pd.notna(activity_comment) and activity_comment != "" else "-")
