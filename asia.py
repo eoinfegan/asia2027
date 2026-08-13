@@ -118,16 +118,22 @@ elif st.session_state.page == 'Destination':
     else:
         st.subheader("Stay & Eat")
         
-        # Accommodation Section
-        acc_link = clean_url(dest_df.iloc[0, 9])
+        # Accommodation Section (Column H = index 7, Column I = index 8, Column J = index 9)
         acc_name = dest_df.iloc[0, 7]
+        acc_booked = str(dest_df.iloc[0, 8]).strip()
+        acc_link = clean_url(dest_df.iloc[0, 9])
+        
         if pd.notna(acc_name) or acc_link:
+            display_acc_name = str(acc_name) if pd.notna(acc_name) else 'N/A'
+            if acc_booked.lower() == 'yes':
+                display_acc_name += " (Booked)"
+                
             c1, c2 = st.columns([1, 2])
             with c1:
                 if acc_link: st.link_button("🏨 Accommodation", acc_link)
                 else: st.write("🏨 *No Link*")
             with c2:
-                st.write(f"**{acc_name if pd.notna(acc_name) else 'N/A'}**")
+                st.write(f"**{display_acc_name}**")
             
         # Food Section (Checks all rows for unique food options)
         food_options = []
