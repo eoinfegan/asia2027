@@ -129,16 +129,24 @@ elif st.session_state.page == 'Destination':
             with c2:
                 st.write(f"**{acc_name if pd.notna(acc_name) else 'N/A'}**")
             
-        # Food Section
-        food_link = clean_url(dest_df.iloc[0, 11])
-        food_name = dest_df.iloc[0, 10]
-        if pd.notna(food_name) or food_link:
+        # Food Section (Checks all rows for unique food options)
+        food_options = []
+        for _, row in dest_df.iterrows():
+            f_name = row.iloc[10]
+            f_link = clean_url(row.iloc[11])
+            if pd.notna(f_name) and str(f_name).strip() not in ["", "-", "nan"]:
+                opt = (str(f_name).strip(), f_link)
+                if opt not in food_options:
+                    food_options.append(opt)
+                    
+        # Display each unique food option found
+        for f_name, f_link in food_options:
             c1, c2 = st.columns([1, 2])
             with c1:
-                if food_link: st.link_button("🍽️ Food", food_link)
+                if f_link: st.link_button("🍽️ Food", f_link)
                 else: st.write("🍽️ No Link")
             with c2:
-                st.write(f"**{food_name if pd.notna(food_name) else 'N/A'}**")
+                st.write(f"**{f_name}**")
             
         st.divider()
         st.subheader("Activities")
